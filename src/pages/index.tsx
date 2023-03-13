@@ -76,7 +76,8 @@ const Home: NextPage = () => {
   };
 
   const TodoItem: React.FC<{ todo: Todo }> = ({ todo }) => {
-    const { id, level, task, completed } = todo;
+    const { id, task, completed } = todo;
+    console.log("🚀 ~ file: index.tsx:80 ~ todo:", todo);
     return (
       <li className="flex place-items-center space-x-1 rounded bg-neutral-100/50 p-2 shadow-md">
         <BiCheckboxMinus
@@ -101,12 +102,13 @@ const Home: NextPage = () => {
 
   // regroup todos by level
   const todosByLevel = todos.reduce((acc, todo) => {
-    if (!acc[todo.level]) {
-      acc[todo.level] = [];
+    const { level } = todo;
+    if (!acc[level]) {
+      acc[level] = [];
     }
-    acc[todo.level] = acc[todo.level] || [];
+    acc[level]?.push(todo);
     return acc;
-  }, {} as Record<number, Todo[]>);
+  }, {} as { [key: number]: Todo[] });
 
   return (
     <>
