@@ -104,7 +104,7 @@ const Home: NextPage = () => {
     if (!acc[todo.level]) {
       acc[todo.level] = [];
     }
-    acc[todo.level].push(todo);
+    acc[todo.level] = acc[todo.level] || [];
     return acc;
   }, {} as Record<number, Todo[]>);
 
@@ -182,9 +182,11 @@ const Home: NextPage = () => {
                         {level}
                       </h4>
                       <ul className="flex w-full flex-col justify-center gap-4">
-                        {todosByLevel[level].map((todo) => (
-                          <TodoItem key={todo.id} todo={todo} />
-                        ))}
+                        {(todosByLevel[parseInt(level)] as Todo[]).map(
+                          (todo) => (
+                            <TodoItem key={todo.id} todo={todo} />
+                          )
+                        )}
                       </ul>
                     </div>
                   ))
