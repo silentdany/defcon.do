@@ -9,48 +9,20 @@ interface Todo {
   completed: boolean;
 }
 
-type SubmitHandler = (e: React.FormEvent<HTMLFormElement>) => void;
-type FormEvent = React.FormEvent<HTMLFormElement>;
-type AddTodo = (task: string, level: number) => void;
-type ToggleTodo = (id: number) => void;
-type RemoveTodo = (id: number) => void;
-
 const Home: NextPage = () => {
-  // todo list boilerplate
-  const todoList = [
-    {
-      id: 1,
-      level: 1,
-      task: "Learn Next.js",
-      completed: false,
-    },
-    {
-      id: 2,
-      level: 3,
-      task: "Learn Tailwind CSS",
-      completed: false,
-    },
-    {
-      id: 3,
-      level: 2,
-      task: "Learn TypeScript",
-      completed: false,
-    },
-  ];
+  const [todos, setTodos] = useState<Todo[]>([]);
 
-  const [todos, setTodos] = useState<Todo[]>(todoList);
-
-  const addTodo: AddTodo = (task, level) => {
+  const addTodo = (task: string, level: number) => {
     const newTodo = {
       id: todos.length + 1,
-      level: level,
+      level,
       task,
       completed: false,
     };
     setTodos([...todos, newTodo]);
   };
 
-  const toggleTodo: ToggleTodo = (id) => {
+  const toggleTodo = (id: number) => {
     const newTodos = todos.map((todo) => {
       if (todo.id === id) {
         return {
@@ -63,15 +35,15 @@ const Home: NextPage = () => {
     setTodos(newTodos);
   };
 
-  const removeTodo: RemoveTodo = (id) => {
+  const removeTodo = (id: number) => {
     const newTodos = todos.filter((todo) => todo.id !== id);
     setTodos(newTodos);
   };
 
-  const handleSubmit: SubmitHandler = (e: FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const task = e.target.task.value;
-    const level = e.target.level.value;
+    const task = (e.currentTarget.task as HTMLInputElement).value.toString();
+    const level = parseInt((e.currentTarget.level as HTMLInputElement).value);
     addTodo(task, level);
   };
 
@@ -130,27 +102,33 @@ const Home: NextPage = () => {
                 Todo List
               </h3>
               <ul className="flex flex-col gap-4">
-                {todos.map((todo) => (
-                  <li
-                    key={todo.id}
-                    className="flex items-center justify-between gap-4"
-                  >
-                    <button
-                      className="rounded-md bg-red-600 px-4 py-2 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50"
-                      onClick={() => removeTodo(todo.id)}
+                {todos.length === 0 ? (
+                  <p className="text-center text-neutral-400">
+                    C&apos;mon do something.
+                  </p>
+                ) : (
+                  todos.map((todo) => (
+                    <li
+                      key={todo.id}
+                      className="flex items-center justify-between gap-4"
                     >
-                      Remove
-                    </button>
-                    <div>{todo.task}</div>
-                    <div>{todo.level}</div>
-                    <button
-                      className="rounded-md bg-red-600 px-4 py-2 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50"
-                      onClick={() => toggleTodo(todo.id)}
-                    >
-                      {todo.completed ? "Completed" : "Incomplete"}
-                    </button>
-                  </li>
-                ))}
+                      <button
+                        className="rounded-md bg-red-600 px-4 py-2 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50"
+                        onClick={() => removeTodo(todo.id)}
+                      >
+                        Remove
+                      </button>
+                      <div>{todo.task}</div>
+                      <div>{todo.level}</div>
+                      <button
+                        className="rounded-md bg-red-600 px-4 py-2 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50"
+                        onClick={() => toggleTodo(todo.id)}
+                      >
+                        {todo.completed ? "Completed" : "Incomplete"}
+                      </button>
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
           </div>
