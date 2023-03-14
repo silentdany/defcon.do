@@ -1,24 +1,36 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BiCheckbox, BiCheckboxChecked, BiCheckboxMinus } from "react-icons/bi";
+import { useLocalStorage } from "~/hooks/useLocalStorage";
+
 interface Todo {
   id: number;
   level: number;
   task: string;
   completed: boolean;
+  timestamp: number;
 }
 
 const Home: NextPage = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todos, setTodos] = useLocalStorage<Todo[]>("todo", []);
+  const [groupedTodos, setGroupedTodos] = useState<{ [key: number]: Todo[] }>(
+    []
+  );
+  const [fail, setFail] = useState(false);
+  console.log("🚀 ~ file: index.tsx:21 ~ fail:", fail);
+  const [modal, setModal] = useState(false);
+  console.log("🚀 ~ file: index.tsx:22 ~ modal:", modal);
 
   const addTodo = (task: string, level: number) => {
+    const timestamp = new Date().getTime();
     const newTodo = {
       // random id
       id: Math.floor(Math.random() * 100000000),
       level,
       task,
       completed: false,
+      timestamp,
     };
     setTodos([...todos, newTodo]);
   };
@@ -48,6 +60,23 @@ const Home: NextPage = () => {
     addTodo(task, level);
   };
 
+  const closeModal = () => {
+    setModal(false);
+  };
+
+  // regroup todos by level
+  useEffect(() => {
+    const todosByLevel = todos.reduce((acc, todo) => {
+      const { level } = todo;
+      if (!acc[level]) {
+        acc[level] = [];
+      }
+      acc[level]?.push(todo);
+      return acc;
+    }, {} as { [key: number]: Todo[] });
+    setGroupedTodos(todosByLevel);
+  }, [todos]);
+
   const levelColor = (level: number) => {
     switch (level) {
       case 1:
@@ -65,21 +94,23 @@ const Home: NextPage = () => {
     }
   };
 
-  const LevelBox = (level: number, children: React.ReactFragment) => {
-    return (
-      <div
-        className={`h-10 w-10 rounded-full bg-opacity-75 ${levelColor(level)}`}
-      >
-        {children}
-      </div>
-    );
-  };
+  useEffect(() => {
+    const failed = (timestamp: number) => {
+      const today = new Date().setHours(0, 0, 0, 0);
+      return timestamp < today;
+    };
+    // check if any todo is failed
+    const failedTodos = todos.filter((todo) => failed(todo.timestamp));
+    if (failedTodos.length > 0) {
+      setFail(true);
+      setModal(true);
+    }
+  }, [todos]);
 
   const TodoItem: React.FC<{ todo: Todo }> = ({ todo }) => {
     const { id, task, completed } = todo;
-    console.log("🚀 ~ file: index.tsx:80 ~ todo:", todo);
     return (
-      <li className="flex place-items-center space-x-1 rounded bg-neutral-100/50 p-2 shadow-md">
+      <li className="relative flex place-items-center space-x-1 rounded bg-neutral-100/50 p-2 shadow-md">
         <BiCheckboxMinus
           className="w-1/6 cursor-pointer text-4xl text-red-700/75"
           onClick={() => removeTodo(id)}
@@ -100,16 +131,6 @@ const Home: NextPage = () => {
     );
   };
 
-  // regroup todos by level
-  const todosByLevel = todos.reduce((acc, todo) => {
-    const { level } = todo;
-    if (!acc[level]) {
-      acc[level] = [];
-    }
-    acc[level]?.push(todo);
-    return acc;
-  }, {} as { [key: number]: Todo[] });
-
   return (
     <>
       <Head>
@@ -120,13 +141,23 @@ const Home: NextPage = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="justify-starr flex min-h-screen flex-col items-center bg-gradient-to-b from-neutral-900 to-red-900">
+      <main className="relative flex min-h-screen flex-col items-center justify-start bg-gradient-to-b from-neutral-900 to-red-900">
+        {fail && modal && (
+          <div
+            className="absolute inset-x-0 z-50 flex h-screen w-screen cursor-pointer items-center justify-center bg-neutral-900/95"
+            onClick={closeModal}
+          >
+            <p className="text-center text-9xl font-bold text-red-700">
+              YOU FAILED
+            </p>
+          </div>
+        )}
         <div className="container flex flex-col items-center justify-center space-y-16 px-4 py-16 ">
           <div className="flex w-full max-w-lg flex-col place-items-center">
             <h1 className="text-5xl font-extrabold tracking-tight text-neutral-100 sm:text-[5rem]">
               Defcon.<span className="text-red-700">DO</span>
             </h1>
-            <h2 className="text-xl text-neutral-400">
+            <h2 className="text-center text-xl text-neutral-400">
               The daily todo app to fucking do it before it&apos;s too late.
             </h2>
           </div>
@@ -165,13 +196,13 @@ const Home: NextPage = () => {
             <h3 className="border-0 border-b-2 border-neutral-100 pb-2 text-left text-3xl font-bold uppercase text-neutral-100 sm:text-2xl">
               <span className="text-red-700">Do</span> it.
             </h3>
-            <ul className="flex flex-col gap-4">
-              {todos.length === 0 ? (
+            <div className="flex flex-col gap-4">
+              {!groupedTodos ? (
                 <p className="text-center text-neutral-400">
                   C&apos;mon do something.
                 </p>
               ) : (
-                Object.keys(todosByLevel)
+                Object.keys(groupedTodos)
                   .sort((a, b) => parseInt(a) - parseInt(b))
                   .map((level) => (
                     <div
@@ -184,7 +215,7 @@ const Home: NextPage = () => {
                         {level}
                       </h4>
                       <ul className="flex w-full flex-col justify-center gap-4">
-                        {(todosByLevel[parseInt(level)] as Todo[]).map(
+                        {(groupedTodos[parseInt(level)] as Todo[]).map(
                           (todo) => (
                             <TodoItem key={todo.id} todo={todo} />
                           )
@@ -193,7 +224,7 @@ const Home: NextPage = () => {
                     </div>
                   ))
               )}
-            </ul>
+            </div>
           </div>
         </div>
       </main>
