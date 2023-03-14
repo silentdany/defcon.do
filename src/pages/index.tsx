@@ -17,10 +17,9 @@ const Home: NextPage = () => {
   const [groupedTodos, setGroupedTodos] = useState<{ [key: number]: Todo[] }>(
     []
   );
+  console.log("🚀 ~ file: index.tsx:18 ~ groupedTodos:", groupedTodos);
   const [fail, setFail] = useState(false);
-  console.log("🚀 ~ file: index.tsx:21 ~ fail:", fail);
   const [modal, setModal] = useState(false);
-  console.log("🚀 ~ file: index.tsx:22 ~ modal:", modal);
 
   const addTodo = (task: string, level: number) => {
     const timestamp = new Date().getTime();
@@ -197,7 +196,7 @@ const Home: NextPage = () => {
               <span className="text-red-700">Do</span> it.
             </h3>
             <div className="flex flex-col gap-4">
-              {!groupedTodos ? (
+              {Object.keys(groupedTodos).length === 0 ? (
                 <p className="text-center text-neutral-400">
                   C&apos;mon do something.
                 </p>
